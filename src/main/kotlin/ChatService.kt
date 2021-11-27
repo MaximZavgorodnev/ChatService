@@ -132,8 +132,8 @@ object ChatService {
 //            (0..idChat).shuffled().last()
         val idMessages = 1
 //            (0..idMessage).shuffled().last()
-        val chat = getListOfMessages(userOne, idChats)
-//        println(chat)
+//        val chat = getListOfMessages(userOne, idChats)
+////        println(chat)
         when (chatStorage[idChats] != null){
             true -> chatStorage[idChats]!!.chatUsers.first { it.messageId == idMessages }.text = text
             else -> throw ChatNotFoundException("У пользователя ${userOne.userName} таких сообщений нет")
@@ -142,11 +142,14 @@ object ChatService {
 
 
     //Удалить сообщение пользователя в этом чате(при удалении последнего сообщения в чате весь чат удаляется)
-    fun deleteMessage(userOne: User, chatId: Int){
-       when(chatStorage[chatId]?.chatUsers?.removeAll { chat -> chat.messageRecipientId == userOne.userId || chat.messageSenderId == userOne.userId }) {
-           true -> println("Чат удален")
-           false -> println("Такого чата не существует")
-           null -> println("Такого чата не существует")
+    fun deleteMessage(userOne: User, chatId: Int): Boolean{
+       when(chatStorage[chatId]?.chatUsers?.removeAll { message -> message.messageRecipientId == userOne.userId || message.messageSenderId == userOne.userId }) {
+           true -> {println("Сообщение удалено")
+               return true}
+           false -> {println("Такого чата не существует")
+           return false}
+           null -> {println("Такого чата не существует")
+               return false}
        }
     }
 
