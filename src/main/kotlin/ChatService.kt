@@ -108,7 +108,6 @@ object ChatService {
 
     //Вывести все чаты пользователя
     fun outputChats(userOne: User): Collection<Chat>{
-
         when {!chatStorage.isEmpty() -> {
             val number = userOne.memoryOfMyChats.keys
             val chats = chatStorage.filter { number.contains(it.component1()) }.values
