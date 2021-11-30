@@ -38,12 +38,12 @@ fun main() {
     service.editMessageInChat(userTwo, "Не, все плохо, Макс", 0)
     println("Все чаты $userTwo " + service.outputChats(userTwo)) //Вывод всех чатов Ивана
     println(service.getListOfMessages(userTwo, 0))
-//    println("11111 чат")
-//    println(service.chatStorage[0]!!.chatUsers) // вывод всех чатов в памяти
-//    println("22222 чат")
-//    println(service.chatStorage[1]!!.chatUsers) // вывод всех чатов в памяти
-//    println("33333 чат")
-//    println(service.chatStorage[2]!!.chatUsers) // вывод всех чатов в памяти
+    println("11111 чат")
+    println(service.chatStorage[0]!!.chatUsers) // вывод всех чатов в памяти
+    println("22222 чат")
+    println(service.chatStorage[1]!!.chatUsers) // вывод всех чатов в памяти
+    println("33333 чат")
+    println(service.chatStorage[2]!!.chatUsers) // вывод всех чатов в памяти
 
     service.deleteChat(userTree, userOne)
     println("Количество чатов с непрочитанными сообщениями: " + service.getUnreadChatsCount())

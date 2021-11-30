@@ -14,17 +14,9 @@ class ChatServiceTest {
         service.idMessage = 0
     }
 
-
-    @Test
-    fun createChat() {
-        nU()
-        service.createChat("Чат между пользователями ${userTree.userName} и ${userOne.userName}",userTree, userOne )
-        assertFalse(service.chatStorage.isEmpty())
-    }
-
     //Если пусто
     @Test
-    fun sendMessage_chatStorage_isEmpty() {
+    fun sendMessage() {
         nU()
         service.sendMessage(userOne, userTwo, "Проверка")
         assertFalse(service.chatStorage.isEmpty())
@@ -32,29 +24,17 @@ class ChatServiceTest {
 
 
     //если уже есть сообщения
-    @Test
-    fun sendMessage_chatStorage_not_isEmpty() {
+    @Test(expected = NoSuchElementException::class)
+    fun sendMessage_try() {
         nU()
-        service.sendMessage(userTwo, userTree, "Проверка1")
-        service.sendMessage(userTwo, userTree, "Проверка2")
-        assertTrue(service.chatStorage.size == 1)
-
-    }
-
-    //если уже есть чаты но между этими пользователями создан впервые
-    @Test
-    fun sendMessage_chatStorage_not_isEmpty_New_Chat() {
-        nU()
-        service.sendMessage(userTwo, userTree, "Проверка2")
+        val newChat = Chat(chatId = 0, chatUsers = mutableListOf(),titles = "Чат между пользователями ${userTree.userName} и ${userOne.userName}", unreadMessages = 0)
+        service.chatStorage.put(newChat.chatId, newChat)
+        userTree.memoryOfMyChats[userOne.userId] = newChat.chatId
+        userOne.memoryOfMyChats[userTree.userId] = newChat.chatId
+        service.sendMessage(userOne, userTree, "Проверка2")
         service.sendMessage(userTree, userOne, "Проверка3")
-        assertTrue("Чат между пользователями ${userTree.userName} и ${userOne.userName}" == service.chatStorage[1]!!.titles)
-    }
+        assertTrue(userOne.memoryOfMyChats.getValue(userOne.memoryOfMyChats.keys.first { it == userTree.userId }) == userTree.memoryOfMyChats.getValue(userOne.memoryOfMyChats.keys.first { it == userOne.userId }))
 
-    @Test
-    fun createMessage() {
-        nU()
-        service.sendMessage(userOne, userTwo, "Проверка")
-        assertTrue(service.chatStorage[0]!!.chatUsers[0].text == "Проверка")
     }
 
     //Сообщение прочитано
@@ -64,30 +44,17 @@ class ChatServiceTest {
         service.sendMessage(userOne, userTwo, "Проверка")
         val chatId = 0
         val messageId = 0
-        assertFalse(service.chatStorage[chatId]?.chatUsers?.first{ messageId == it.messageId }?.readabilityId!!)
-    }
-
-    //Сообщение было прочитано ранее
-    @Test
-    fun readingMessage_Earlier() {
-        nU()
-        service.sendMessage(userOne, userTwo, "Проверка")
-        val chatId = 0
-        val messageId = 0
-        service.readingMessage(chatId, messageId)
-        assertTrue(service.chatStorage[chatId]?.chatUsers?.first{ messageId == it.messageId }?.readabilityId!!)
+        assertFalse(service.chatStorage.getValue(chatId).chatUsers.first{ messageId == it.messageId }.readabilityId)
     }
 
     //Сообщения не существует
-    @Test
+    @Test(expected = NoSuchElementException::class)
     fun readingMessage_Null() {
-        service.chatStorage.clear()
-        service.sendMessage(userOne, userTwo, "Проверка")
+        nU()
         service.sendMessage(userOne, userTwo, "Проверка")
         val chatId = 0
-        val messageId = 0
-        service.readingMessage(chatId, messageId)
-        assertNull(service.chatStorage[chatId]?.chatUsers?.first{ messageId == it.messageId }?.readabilityId)
+        val messageId = 3
+        assertFalse(service.chatStorage.getValue(chatId).chatUsers.first{ messageId == it.messageId }.readabilityId)
     }
 
 
@@ -101,15 +68,7 @@ class ChatServiceTest {
         assertTrue(service.chatStorage.isEmpty())
     }
 
-    //Чат удален
-    @Test
-    fun deleteChat_No_Users() {
-        nU()
-        service.deleteChat(userOne, userTwo)
-        assertTrue(service.chatStorage.isEmpty())
-    }
-
-    //Чат удален
+    //Чата между пользователями не существует
     @Test
     fun deleteChat_No_Users_isEmpty() {
         nU()
@@ -130,18 +89,19 @@ class ChatServiceTest {
         assertTrue(service.chatStorage.size == 2)
     }
 
-    //Вывести все чаты пользователя Exception
-    @Test(expected = ChatNotFoundException::class)
-    fun outputChats_Exception() {
-        nU()
-        service.outputChats(userOne)
-    }
-
     @Test
     fun getListOfMessages() {
         nU()
         service.sendMessage(userOne, userTwo, "Проверка")
         assertFalse(service.getListOfMessages(userOne,0).isEmpty())
+    }
+
+    //Ошибка вывода листа
+    @Test(expected = Exception::class)
+    fun getListOfMessages_No() {
+        nU()
+        service.sendMessage(userOne, userTwo, "Проверка")
+        assertTrue(service.getListOfMessages(userTree,0).isEmpty())
     }
 
     //Отредактировать сообщения пользователя
@@ -152,15 +112,6 @@ class ChatServiceTest {
         service.sendMessage(userOne, userTwo, "Проверка12")
         service.editMessageInChat(userOne, "Gooooo", 0)
         assertTrue(service.chatStorage[0]!!.chatUsers.first { it.messageId == 1 }.text == "Gooooo")
-    }
-
-    //Не смогли отредактировать
-    @Test(expected = ChatNotFoundException::class)
-    fun editMessageInChat_No() {
-        nU()
-        service.sendMessage(userOne, userTwo, "Проверка")
-        service.sendMessage(userOne, userTwo, "Проверка12")
-        service.editMessageInChat(userOne, "Gooooo", 7)
     }
 
     //удаление чата
