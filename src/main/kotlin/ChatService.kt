@@ -107,9 +107,8 @@ object ChatService {
             chatStorage.filter { !chatStorage.getValue(chatId).chatUsers.first { messageId == it.messageId }
                 .readabilityId }.getValue(chatId).chatUsers.first { messageId == it.messageId }.readabilityId = true
             println("Cообщение прочитано")
-            val nhi  = chatStorage.getValue(chatId).chatUsers.first { messageId == it.messageId }.readabilityId
         } catch (e: NoSuchElementException){
-            println("Cообщениz не существует")
+            println("Cообщение не существует")
         }
 
 
@@ -127,82 +126,102 @@ object ChatService {
     //Удалить чаты пользователя
     fun deleteChat(userTwo: User,//Пользователь чат с которым хотят удалить
                    userOne: User,//Пользователь который хочет удалить чат
-                                 ) {
-        when {
-            !chatStorage.isEmpty() -> {
-                when (userTwo.memoryOfMyChats.containsValue(userOne.userId)) {
-                    true -> {
-                        val number = userTwo.memoryOfMyChats.filterValues { it == userOne.userId }.keys
-                        val chatId = chatStorage.keys.first { it == number.elementAt(0) }
-                        chatStorage.remove(chatId)
-                        println("Чат между пользователями ${userTwo.userName} и ${userOne.userName} удален")
-                    }
-                    else -> { println("Чата между пользователями ${userTwo.userName} и ${userOne.userName} не существует") }
-                }
-            }
-            else -> { println("Чата между пользователями ${userTwo.userName} и ${userOne.userName} не существует") }
+    ) {
+        try {
+            chatStorage.remove(userOne.memoryOfMyChats[userTwo.userId])
+        } catch (e: NoSuchElementException){
+            println("Чата между пользователями не существует")
         }
+
+
+//        when {
+//            !chatStorage.isEmpty() -> {
+//                when (userTwo.memoryOfMyChats.containsValue(userOne.userId)) {
+//                    true -> {
+//                        val number = userTwo.memoryOfMyChats.filterValues { it == userOne.userId }.keys
+//                        val chatId = chatStorage.keys.first { it == number.elementAt(0) }
+//                        chatStorage.remove(chatId)
+//                        println("Чат между пользователями ${userTwo.userName} и ${userOne.userName} удален")
+//                    }
+//                    else -> { println("Чата между пользователями ${userTwo.userName} и ${userOne.userName} не существует") }
+//                }
+//            }
+//            else -> { println("Чата между пользователями ${userTwo.userName} и ${userOne.userName} не существует") }
+//        }
     }
 
     //Вывести все чаты пользователя
     fun outputChats(userOne: User): Collection<Chat>{
-        when {!chatStorage.isEmpty() -> {
-            val number = userOne.memoryOfMyChats.keys
-            val chats = chatStorage.filter { number.contains(it.component1()) }.values
-            return chats
-            }
-            else -> {throw ChatNotFoundException("У пользователя ${userOne.userName} нет чатов")}
-        }
+        return  chatStorage.filter{ !userOne.memoryOfMyChats.isEmpty() }.filter{ userOne.memoryOfMyChats.values.contains(it.component1()) }.values
+//        when {!chatStorage.isEmpty() -> {
+//            val number = userOne.memoryOfMyChats.keys
+//            val chats = chatStorage.filter { number.contains(it.component1()) }.values
+//            return chats
+//            }
+//            else -> {throw ChatNotFoundException("У пользователя ${userOne.userName} нет чатов")}
+//        }
     }
 
     //Получить список сообщений из чата
     fun getListOfMessages(userOne: User, idChat: Int): MutableList<Message> {
-        val userOneChat = outputChats(userOne)
         val idChats = idChat
-//            (0..idChat).shuffled().last()
-        val chat = userOneChat.first {it.chatId == idChats}.chatUsers
-        return chat
+        //            (0..idChat).shuffled().last()
+        try {
+            val chat = outputChats(userOne).first {it.chatId == idChats}.chatUsers
+            return chat
+        } catch (e: NoSuchElementException) {
+            throw ChatNotFoundException("У пользователя ${userOne.userName} нет чатов")
+        }
     }
 
     //Отредактировать сообщение пользователя в этом чате
-    fun editMessageInChat(userOne: User, text: String, id: Int){
-        val idChats = id
+    fun editMessageInChat(userOne: User, text: String, idChats: Int){
 //            (0..idChat).shuffled().last()
         val idMessages = 1
 //            (0..idMessage).shuffled().last()
 //        val chat = getListOfMessages(userOne, idChats)
 ////        println(chat)
-        when (chatStorage[idChats] != null){
-            true -> chatStorage[idChats]!!.chatUsers.first { it.messageId == idMessages }.text = text
-            else -> throw ChatNotFoundException("У пользователя ${userOne.userName} таких сообщений нет")
+        try {
+            chatStorage.getValue(idChats).chatUsers.first { it.messageId == idMessages }.text = text
+        } catch (e: NoSuchElementException){
+            println("У пользователя ${userOne.userName} нет чатов")
         }
+//        when (chatStorage[idChats] != null){
+//            true -> chatStorage[idChats]!!.chatUsers.first { it.messageId == idMessages }.text = text
+//            else -> throw ChatNotFoundException("У пользователя ${userOne.userName} таких сообщений нет")
+//        }
     }
 
 
-    //Удалить сообщение пользователя в этом чате(при удалении последнего сообщения в чате весь чат удаляется)
-    fun deleteMessage(userOne: User, chatId: Int): Boolean{
-       when(chatStorage[chatId]?.chatUsers?.removeAll { message -> message.messageRecipientId == userOne.userId || message.messageSenderId == userOne.userId }) {
-           true -> {println("Сообщение удалено")
-               return true}
-           false -> {println("Такого чата не существует")
-           return false}
-           null -> {println("Такого чата не существует")
-               return false}
-       }
+    //Удалить сообщения пользователя в этом чате(при удалении последнего сообщения в чате весь чат удаляется)
+    fun deleteMessage(userOne: User, chatId: Int) {
+        try {
+            chatStorage.getValue(chatId).chatUsers.removeAll{ message -> message.messageRecipientId == userOne.userId || message.messageSenderId == userOne.userId }
+            println("Сообщения удалены")
+        } catch (e: NoSuchElementException) {
+            println("Такого чата не существует")
+        }
+
+
+
+//       when(chatStorage[chatId]?.chatUsers?.removeAll { message -> message.messageRecipientId == userOne.userId || message.messageSenderId == userOne.userId }) {
+//           true -> {println("Сообщение удалено")
+//               return true}
+//           false -> {println("Такого чата не существует")
+//           return false}
+//           null -> {println("Такого чата не существует")
+//               return false}
+//       }
     }
 
     //Получить информацию о количестве непрочитанных чатов (например, service.getUnreadChatsCount) -
     // это количество чатов, в каждом из которых есть хотя бы одно непрочитанное сообщение
     fun getUnreadChatsCount(): Int {
-        val unreadChat = chatStorage.values.filter { chat -> chat.unreadMessages !=0 }
-        return unreadChat.size
+        return chatStorage.values.filter { chat -> chat.unreadMessages !=0 }.size
     }
 
     //Получить список чатов пользователя - где в каждом чате есть последнее сообщение (если нет, то пишется "нет сообщений")
     fun getListOfChatsWithMessages(userOne: User): Collection<Chat> {
-        val number = userOne.memoryOfMyChats.keys
-        return chatStorage.filter { number.contains(it.component1()) }.values }
-
-
-
+        return chatStorage.filter { userOne.memoryOfMyChats.keys.contains(it.component1()) }.values
+    }
 }
